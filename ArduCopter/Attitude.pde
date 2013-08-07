@@ -604,7 +604,7 @@ get_rate_yaw(int32_t target_rate)
 #endif
 
     // constrain output
-    return output;
+    return -output;
 }
 #endif // !HELI_FRAME
 
