@@ -201,6 +201,8 @@ static void copter_leds_init(void)
     }
 }
 
+
+// *********** MY MODIFIED LEDS FUNC ***************
 static void update_copter_leds(void)
 {
     if (g.copter_leds_mode == 0) {
@@ -210,68 +212,12 @@ static void update_copter_leds(void)
     // motor leds control
     if (g.copter_leds_mode & COPTER_LEDS_BITMASK_ENABLED) {
         if (motors.armed()) {
-            if (ap.low_battery) {
-                if (g.copter_leds_mode & COPTER_LEDS_BITMASK_BATT_OSCILLATE) {
-                    copter_leds_oscillate();                        //if motors are armed, but battery level is low, motor leds fast blink
-                } else {
-                    copter_leds_fast_blink();                       //if motors are armed, but battery level is low, motor leds oscillate
-                }
-            } else {
-                if (g.copter_leds_mode & COPTER_LEDS_BITMASK_MOTOR_NAV_BLINK) {
-                    if (copter_leds_nav_blink > 0) {
-                        copter_leds_slow_blink();                   //if nav command was seen, blink LEDs.
-                    } else {
-                        copter_leds_on();
-                    }
-                } else {
-                    copter_leds_on();                               //if motors are armed, battery level OK, all motor leds ON
-                }
-            }
+             copter_leds_oscillate();                        //if motors are armed, but battery level is low, motor leds fast blink
         } else {
-            copter_leds_slow_blink();                               //if motors are not armed, blink motor leds
-        }
-    }
-
-    // GPS led control
-    if (g.copter_leds_mode & COPTER_LEDS_BITMASK_GPS) {
-
-        // GPS LED on if we have a fix or Blink GPS LED if we are receiving data
-        // ---------------------------------------------------------------------
-        switch (g_gps->status()) {
-
-        case GPS::NO_GPS:
-            copter_leds_GPS_off();                                  //if no valid GPS signal, turn GPS LED off
-            break;
-
-        case GPS::NO_FIX:
-            copter_leds_GPS_slow_blink();                           //if GPS has valid reads, but no fix, blink GPS LED slow
-            break;
-
-        case GPS::GPS_OK_FIX_2D:
-        case GPS::GPS_OK_FIX_3D:
-            if(ap.home_is_set) {
-                if (g.copter_leds_mode & COPTER_LEDS_BITMASK_GPS_NAV_BLINK) {
-                    if (copter_leds_nav_blink >0) {
-                        copter_leds_GPS_slow_blink();               //if nav command was seen, blink LEDs.
-                    } else {
-                        copter_leds_GPS_on();
-                    }
-                } else {
-                    copter_leds_GPS_on();							//Turn GPS LEDs on when gps has valid fix AND home is set
-                }
-            } else {
-                copter_leds_GPS_fast_blink();                       //if GPS has fix, but home is not set, blink GPS LED fast
-            }
-            break;
-        }
-    }
-
-    // AUX led control
-    if (g.copter_leds_mode & COPTER_LEDS_BITMASK_AUX) {
-        if (ap_system.CH7_flag) {
-            copter_leds_aux_on();                                   //if sub-control of Ch7 is high, turn Aux LED on
-        } else {
-            copter_leds_aux_off();                                  //if sub-control of Ch7 is low, turn Aux LED off
+			if (g_gps->status() != GPS::GPS_OK_FIX_3D)
+	            copter_leds_slow_blink();                               //if motors are not armed, blink motor leds
+			else
+				copter_leds_on();
         }
     }
 }
@@ -358,7 +304,39 @@ static void copter_leds_fast_blink(void) {
 }
 
 static void copter_leds_oscillate(void) {
+
+    digitalWrite(COPTER_LED_1, COPTER_LED_OFF);
+    digitalWrite(COPTER_LED_2, COPTER_LED_OFF);
+    digitalWrite(COPTER_LED_3, COPTER_LED_OFF);
+    digitalWrite(COPTER_LED_4, COPTER_LED_OFF);
+    digitalWrite(COPTER_LED_5, COPTER_LED_OFF);
+    digitalWrite(COPTER_LED_6, COPTER_LED_OFF);
+    digitalWrite(COPTER_LED_7, COPTER_LED_OFF);
+    digitalWrite(COPTER_LED_8, COPTER_LED_OFF);
+
+	switch(copter_leds_motor_blink) {
+		case 0:
+	        digitalWrite(COPTER_LED_1, COPTER_LED_ON);	
+			break;
+		case 1:
+	        digitalWrite(COPTER_LED_2, COPTER_LED_ON);	
+			break;
+		case 2:
+	        digitalWrite(COPTER_LED_3, COPTER_LED_ON);	
+			break;
+		case 3:
+	        digitalWrite(COPTER_LED_4, COPTER_LED_ON);	
+			copter_leds_motor_blink = 255;
+			break;
+		default:
+			copter_leds_motor_blink = 255;
+			break;
+	}
+
     copter_leds_motor_blink++;                                                  // this increments once every 1/10 second because it is in the 10hz loop
+
+	/*
+
     if ( 0 < copter_leds_motor_blink && copter_leds_motor_blink < 3 ) {         // when the counter reaches 3 (1/5 sec), then toggle the leds
         if ( !(g.copter_leds_mode & COPTER_LEDS_BITMASK_AUX)) {
             digitalWrite(COPTER_LED_1, COPTER_LED_ON);
@@ -399,7 +377,7 @@ static void copter_leds_oscillate(void) {
         digitalWrite(COPTER_LED_8, COPTER_LED_ON);
     }else{
         copter_leds_motor_blink = 0;                                            // start blink cycle again
-    }
+    }*/
 }
 
 static void copter_leds_GPS_on(void) {
